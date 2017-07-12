@@ -18,55 +18,67 @@ using namespace cv;
 using namespace std;
 
 void myThread(VideoCapture fluxCam) {
-	//cout << "Launched by thread " << endl;
-	Mat frame;
-	if (!fluxCam.read(frame)) {
+	//Mat binaryFrame;
+	
+	Mat frameThread;
+
+	if (!fluxCam.read(frameThread)) {
 		cerr << "Unable to read next frame." << endl;
 		cerr << "Exiting..." << endl;
 		exit(EXIT_FAILURE);
 	}
-	
 
+	/*
+	myCam->binairisation();
+	/*
+	myCam->calculBarycentre(binaryFrame);
+	frameThread = myCam->tracking(frameThread);
+	frameThread = myCam->drawContours(binaryFrame, frameThread);
+	myCam->trajectory();
+	myCam->fallDetection();
+	
+	cout << "dans le thread" << endl;
+	myCam->affiche();
+	//myCam->affiche(binaryFrame, "binary_Image", fluxCam);
+	//imshow("thread frame" , frameThread);   */
 }
 
 int main() {
-
-
+	
+	//Mat frame;
+	
 	Mat frame; //current frame
-
-	CvPoint barycentre;
 	Mat binaryFrame; 
 	char keyboard;
 	Mat elementErode = getStructuringElement(MORPH_ELLIPSE,	Size(4,3), Point(0,0));
-	Mat elementDilate = getStructuringElement(MORPH_ELLIPSE, Size(3,2),	Point(0,0));
-	int nbFr = 0;
+	Mat elementDilate = getStructuringElement(MORPH_ELLIPSE, Size(3,2),	Point(0,0));   
 	camera * ipCam = new camera();	
 	VideoCapture fluxCam =ipCam->getVideo();
-
-	vector<Vec4i> hierarchy;
-	vector<Vec3f> vecCircles;
-	vector<Vec3f>::iterator itrCircles;
-
-	Mat binaryImage;
 	Ptr<BackgroundSubtractorMOG2> pMOG2; //MOG2 Background subtractor
 	pMOG2 = createBackgroundSubtractorMOG2(700, 64, false); //MOG2 approach
-	pMOG2->setNMixtures(3);
-	
-	int a=0;
 
+	
+	//create the capture object
+	//VideoCapture capture("rtsp://admin:admin@10.35.127.245/live.sdp");
+	VideoCapture capture("test_1.mp4");
+	//VideoCapture capture(0);
+	
+	/*
 	void detectAndDisplay(Mat frame);
 	String bodyCascadeName = "haarcascade_fullbody.xml";
 	//String eyes_cascade_name = "haarcascade_eye.xml";
 	CascadeClassifier bodyCascade;
 	CascadeClassifier upperBodyCascade;
-	String windowName = "Capture - Face detection";
+	String windowName = "Capture - Face detection";  
 
 	if (!bodyCascade.load(bodyCascadeName)) { 
 		printf("--(!)Error loading face cascade\n"); 
 		return -1; 
 	}
+	*/
 
-	if (!fluxCam.isOpened()) {
+
+	if (!capture.isOpened()) {
 		//error in opening the video input
 		cerr << "Unable to open video " << endl;
 		exit(EXIT_FAILURE);
@@ -78,7 +90,6 @@ int main() {
 	while (keyboard != 'q' && keyboard != 27) {
 
 		
-
 		//read the current frame
 		if (!fluxCam.read(frame)) {
 			cerr << "Unable to read next frame." << endl;
@@ -86,22 +97,18 @@ int main() {
 			exit(EXIT_FAILURE);
 		}  
 
-	thread processing(myThread, fluxCam);  
-
-		//resize(frame, frame, Size(640, 360), 0, 0, INTER_CUBIC);
-		//resize(frame, frame, Size(960, 540), 0, 0, INTER_CUBIC);
-
-		//frame = ipCam->detectAndDisplay(frame, body_cascade); 
-
-		binaryFrame = ipCam->binairisation(frame, binaryImage, pMOG2, elementErode, elementDilate);
-		barycentre = ipCam->calculBarycentre(binaryFrame);
-		frame = ipCam->tracking(frame, barycentre); 
+		
+		thread processing(myThread, fluxCam);  
+		
+		binaryFrame = ipCam->binairisation(frame, binaryFrame, pMOG2, elementErode, elementDilate);
+		ipCam->calculBarycentre(binaryFrame);
+		frame = ipCam->tracking(frame); 
 		frame = ipCam->drawContours(binaryFrame, frame);
 		ipCam->trajectory();
 		ipCam->fallDetection();
 		
 		ipCam->affiche(frame, "ip_cam", fluxCam);
-		ipCam->affiche(binaryFrame, "binary_Image", fluxCam);
+		ipCam->affiche(binaryFrame, "binary_Image", fluxCam);  
 	 
 		keyboard = (char)waitKey(10);
 		processing.join();

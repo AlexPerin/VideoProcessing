@@ -4,6 +4,9 @@
 
 camera::camera()
 {
+	//elementErode = getStructuringElement(MORPH_ELLIPSE, Size(4, 3), Point(0, 0));
+	//elementDilate = getStructuringElement(MORPH_ELLIPSE, Size(3, 2), Point(0, 0));
+	//pMOG2 = createBackgroundSubtractorMOG2(700, 64, false); //MOG2 approach	
 	nbPixels = 0;
 	barycentre = (-1 , -1);
 	x1 = 1;
@@ -11,10 +14,9 @@ camera::camera()
 	y1 = 1;
 	y2 = 1;
 	theta = 0;      // in degrees
-	theta2 = 0;
 	total=0;
-	moy=0;
-	rectSizeRate = 0;
+	rectSizeRate = 1;
+	T[11] = { 1 };
 }
 
 
@@ -25,23 +27,23 @@ camera::~camera() {
 VideoCapture camera::getVideo() {
 
 	//create the capture object
-	//VideoCapture capture("rtsp://admin:admin@10.35.127.245/live.sdp");
-	VideoCapture capture("test_1.mp4");
+	VideoCapture capture("rtsp://admin:admin@10.35.127.245/live.sdp");
+	//VideoCapture capture("test_1.mp4");
 	//VideoCapture capture(0);
 	
 	return capture;
 
 }
 
-Mat camera::binairisation(Mat image, Mat b_image, Ptr<BackgroundSubtractorMOG2> pMOG2, Mat e_erode, Mat e_dilate) {
+Mat camera::binairisation(Mat image, Mat b_image, Ptr<BackgroundSubtractorMOG2> pMOG2, Mat elementErode, Mat elementDilate) {
 	pMOG2->apply(image, b_image, -1);
-	erode(b_image, b_image, e_erode);
-	dilate(b_image, b_image, e_dilate);
+	erode(b_image, b_image, elementErode);
+	dilate(b_image, b_image, elementDilate);
 	return b_image;
 }
 
 
-CvPoint camera::calculBarycentre(Mat image) {
+void camera::calculBarycentre(Mat image) {
 	int sommeX = 0;
 	int sommeY = 0;
 	nbPixels = 0;
@@ -62,17 +64,16 @@ CvPoint camera::calculBarycentre(Mat image) {
 
 	if (nbPixels > 300) {
 		barycentre.x = (int)(sommeX / nbPixels);
-		barycentre.y = (int)(sommeY / nbPixels);
-		return barycentre;
+		barycentre.y = (int)(sommeY / nbPixels);	
 	}
+
 	else {
 		barycentre.x = -1;
 		barycentre.y = -1;
-		return barycentre;
 	}
 }
 
-Mat camera::tracking(Mat image, CvPoint barycentre) {
+Mat camera::tracking(Mat image) {
 
 	int objectNextStepX, objectNextStepY;
 	CvPoint positionAct = barycentre;
@@ -110,7 +111,6 @@ Mat camera::tracking(Mat image, CvPoint barycentre) {
 		positionAct.y = -1;
 	}  
 
-
 	return	image;
 
 }
@@ -125,7 +125,7 @@ void camera::affiche(Mat image, string nameWindow, VideoCapture capture) {
 	string frameNumberString = ss.str();
 	putText(image, frameNumberString.c_str(), cv::Point(15, 15),
 		FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0));
-
+	
 	imshow(nameWindow, image);
 }
 
@@ -173,7 +173,6 @@ Mat camera::drawContours(Mat binaryFrame, Mat frame) {
 	/* Find the rotated rectangles and ellipses for each contour */
 	vector<RotatedRect> minEllipse(contours.size());
 	vector<RotatedRect> minRect(contours.size());
-	float rectSizeRate = 0;
 	float rectAngle = 0;
 	float rectWidth, rectHeight = 0;
 	for (int i = 0; i < contours.size(); i++)
@@ -248,11 +247,10 @@ void camera::fallDetection() {
 	
 	/*
 	cout << " theta = " << theta << endl;
-	cout << " theta2 = " << theta2 << endl;
-	cout << "total = " << total << endl;
-	*/
-
- 	if (total < -1.5 && (theta <100 && theta > 80) && (rectSizeRate < 1)) {
+	cout << " rate = " << rectSizeRate << endl;
+	cout << "total = " << total << endl;  */
+	
+ 	if ((total < -1.5)  && (theta <100 && theta > 80) && (rectSizeRate > 1)) {
 
 		cout << "FALL !!!!!! \n" << endl;
 

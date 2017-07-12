@@ -19,21 +19,29 @@ public:
 	~camera();
 	VideoCapture getVideo();
 	Mat binairisation(Mat image, Mat b_image, Ptr<BackgroundSubtractorMOG2> pMOG2, Mat erode, Mat dilate);
-	CvPoint calculBarycentre(Mat image);
-	Mat tracking(Mat image , CvPoint barycentre);
-	void affiche(Mat image, string nameWindow, VideoCapture capture);
+	void calculBarycentre(Mat image);
+	Mat tracking(Mat image);
+	void affiche( Mat image, string nameWindow, VideoCapture capture);
 	int getPx();
 	Mat detectAndDisplay(Mat frame, CascadeClassifier body_cascade);// , CascadeClassifier upper_body_cascade);
-	Mat enclosingEllipse(Mat binaryFrame, Mat frame);
 	void trajectory();
 	void fallDetection();
 	Mat drawContours(Mat binaryFrame, Mat frame);
 private:
 
+	/*
+	Mat frame; //current frame
+	Mat binaryFrame;
+	char keyboard;
+	Mat elementErode;
+	Mat elementDilate;
+
+	Ptr<BackgroundSubtractorMOG2> pMOG2; //MOG2 Background subtractor    */
+	
 	CvPoint barycentre;
 	int nbPixels;
 	float x1, x2, y1, y2;
-	float T[11] = {1,1,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1};
+	float T[11];
 	float theta;       // in degrees
 	float total;
 	float moy;
